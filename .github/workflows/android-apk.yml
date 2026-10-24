@@ -30,8 +30,31 @@ jobs:
 
       - name: Install Android SDK packages
         run: |
-          yes | sdkmanager --licenses > /dev/null
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" > /dev/null
+          # GitHub runs bash with `set -eo pipefail`, so `yes | sdkmanager --licenses`
+          # fails on SIGPIPE: the license step must tolerate a non-zero exit.
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          SDKMANAGER="$(command -v sdkmanager || true)"
+          if [ -z "$SDKMANAGER" ]; then
+            SDKMANAGER="$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | tail -1 || true)"
+          fi
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager not found - installing the command line tools"
+            mkdir -p "$HOME/android-sdk/cmdline-tools"
+            wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdtools.zip
+            unzip -q /tmp/cmdtools.zip -d "$HOME/android-sdk/cmdline-tools"
+            mv "$HOME/android-sdk/cmdline-tools/cmdline-tools" "$HOME/android-sdk/cmdline-tools/latest"
+            SDKMANAGER="$HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager"
+            echo "ANDROID_HOME=$HOME/android-sdk" >> "$GITHUB_ENV"
+            echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> "$GITHUB_ENV"
+          fi
+          echo "using $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
 
       - name: Create the Gradle wrapper
         run: gradle wrapper --gradle-version 8.7 --no-daemon
