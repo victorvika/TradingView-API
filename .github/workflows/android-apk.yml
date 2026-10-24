@@ -1,0 +1,49 @@
+name: Android sample APK
+
+# Builds android-sample/ on a free GitHub-hosted runner: the no-laptop path.
+# Download the APK from the run's "Artifacts" section and install it with `adb install`
+# or by opening the file on the phone (allow "install unknown apps" for your browser).
+on:
+  push:
+    branches:
+      - arena/0328229a-tradingview-api
+    paths:
+      - 'android-sample/**'
+      - '.github/workflows/android-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android-sample
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses > /dev/null
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" > /dev/null
+
+      - name: Create the Gradle wrapper
+        run: gradle wrapper --gradle-version 8.7 --no-daemon
+
+      - name: Unit tests (protocol layer)
+        run: ./gradlew test --no-daemon --stacktrace
+
+      - name: Build the debug APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvchart-debug-apk
+          path: android-sample/app/build/outputs/apk/debug/app-debug.apk

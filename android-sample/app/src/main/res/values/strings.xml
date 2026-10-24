@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TV Chart</string>
+    <string name="symbol_hint">Symbol, e.g. BINANCE:BTCUSDT</string>
+    <string name="load">Load</string>
+    <string name="price_placeholder">--</string>
+    <string name="status_starting">Starting…</string>
+</resources>

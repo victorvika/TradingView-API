@@ -1,0 +1,67 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Optional release signing. Create the keystore with keytool and put the four
+// TVCHART_* values in ~/.gradle/gradle.properties. Without them `assembleDebug`
+// still produces an installable, debug-signed APK, which is enough for personal use.
+def keystorePath = project.findProperty('TVCHART_STORE_FILE')
+
+android {
+    namespace 'com.example.tvchart'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.example.tvchart'
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePath != null) {
+                storeFile file(keystorePath)
+                storePassword project.findProperty('TVCHART_STORE_PASSWORD')
+                keyAlias project.findProperty('TVCHART_KEY_ALIAS')
+                keyPassword project.findProperty('TVCHART_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+        }
+        release {
+            minifyEnabled false
+            if (keystorePath != null) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint {
+        abortOnError false
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+}
+
+dependencies {
+    // Maven Central, Apache-2.0. OkHttp needs Android 5.0+ (API 21) and Java 8.
+    // 5.x is NOT used here on purpose: okhttp-android 5.5.0 declares minCompileSdk 37,
+    // which would break the compileSdk 34 target of this sample.
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+
+    testImplementation 'junit:junit:4.13.2'
+}

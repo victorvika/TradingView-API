@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>TV Chart</title>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; width: 100%; background: #131722; overflow: hidden; }
+    #chart { height: 100%; width: 100%; }
+    #badge {
+      position: absolute; right: 8px; bottom: 8px; z-index: 5;
+      padding: 4px 8px; border-radius: 6px;
+      background: rgba(19, 23, 34, 0.82); color: #e6e9ef;
+      font: 12px/1.4 system-ui, sans-serif; pointer-events: none;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart"></div>
+  <div id="badge"></div>
+
+  <script>
+  // Kept dependency-free and ES5-ish: an un-updated Android System WebView can be old.
+  var DEFAULT_SYMBOL = 'BINANCE:BTCUSDT';
+  var DEFAULT_INTERVAL = '60';
+
+  function queryParam(name, fallback) {
+    var search = (window.location.search || '').replace(/^\?/, '');
+    var parts = search.split('&');
+    for (var i = 0; i < parts.length; i++) {
+      var pair = parts[i].split('=');
+      if (decodeURIComponent(pair[0]) === name) {
+        return decodeURIComponent((pair[1] || '').replace(/\+/g, ' '));
+      }
+    }
+    return fallback;
+  }
+
+  function chartOptions(symbol, interval) {
+    return {
+      autosize: true,
+      symbol: symbol,
+      interval: interval,
+      timezone: 'Asia/Kolkata',
+      theme: 'dark',
+      style: '1',
+      locale: 'en',
+      backgroundColor: 'rgba(19, 23, 34, 1)',
+      hide_side_toolbar: false,
+      allow_symbol_change: true,
+      save_image: false,
+      calendar: false,
+      support_host: 'https://www.tradingview.com'
+    };
+  }
+
+  // TradingView's free "advanced chart" widget. The embed script reads its own
+  // JSON body, so the script tag is created here instead of being hard-coded:
+  // that way the symbol/interval can come from the WebView URL.
+  function mountChart(symbol, interval) {
+    var host = document.getElementById('chart');
+    host.innerHTML = '';
+
+    var container = document.createElement('div');
+    container.className = 'tradingview-widget-container';
+    container.style.height = '100%';
+    container.style.width = '100%';
+
+    var widget = document.createElement('div');
+    widget.className = 'tradingview-widget-container__widget';
+    widget.style.height = '100%';
+    widget.style.width = '100%';
+    container.appendChild(widget);
+
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.async = true;
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    script.text = JSON.stringify(chartOptions(symbol, interval));
+    container.appendChild(script);
+
+    host.appendChild(container);
+  }
+
+  // Called from Java: webView.evaluateJavascript("window.setQuote(...)", null)
+  window.setQuote = function (text) {
+    var badge = document.getElementById('badge');
+    badge.textContent = text;
+    badge.style.display = text ? 'block' : 'none';
+  };
+
+  // Called from the page into Java (WebBridge), so the socket can be started
+  // once the chart DOM exists.
+  window.reportReady = function () {
+    if (window.AndroidBridge && window.AndroidBridge.onChartReady) {
+      window.AndroidBridge.onChartReady();
+    }
+  };
+
+  mountChart(queryParam('symbol', DEFAULT_SYMBOL), queryParam('interval', DEFAULT_INTERVAL));
+  window.reportReady();
+  </script>
+</body>
+</html>

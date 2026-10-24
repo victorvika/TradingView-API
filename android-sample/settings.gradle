@@ -1,0 +1,19 @@
+// No jcenter(): it was sunset by JFrog (read-only since 2021, final shutdown 2 Feb 2026).
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()          // hosts the Android Gradle Plugin itself (Apache-2.0)
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()          // only needed for AGP / platform artifacts
+        mavenCentral()    // every app library used here comes from Maven Central
+    }
+}
+
+rootProject.name = 'TVChart'
+include ':app'

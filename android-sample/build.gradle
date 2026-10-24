@@ -1,0 +1,5 @@
+// AGP 8.5.2 is the newest AGP that Android Studio Koala (2024.1.1) accepts (it supports 3.2-8.5)
+// and the oldest AGP that supports compileSdk 34 is 8.1.1. Gradle 8.7+ is required by AGP 8.5.
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
+}
